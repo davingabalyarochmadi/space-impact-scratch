@@ -1,0 +1,36 @@
+name: Build Space Impact Scratch
+on:
+  push:
+    branches: [main]
+    paths:
+      - build.py
+      - .github/workflows/build-scratch.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install rendering dependencies
+        run: python -m pip install "CairoSVG==2.8.2" "Pillow==12.0.0"
+      - name: Build corrected Scratch 3 project
+        run: python build.py
+      - name: Validate Scratch archive and assets
+        run: |
+          python -c "import json,zipfile,io;from PIL import Image;z=zipfile.ZipFile('Space_Impact.sb3');assert z.testzip() is None;p=json.loads(z.read('project.json'));c=p['targets'][0]['costumes'];assert len(c)==4 and all(t['dataFormat']=='png' and Image.open(io.BytesIO(z.read(t['md5ext']))).size==(480,360) for t in c);print('Backdrop PNGs and Scratch archive valid')"
+      - name: Commit the fixed game
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Space_Impact.sb3
+          if ! git diff --cached --quiet; then
+            git commit -m "build: publish Space Impact with compatible bitmap backdrops"
+            git push origin HEAD:main
+          fi
