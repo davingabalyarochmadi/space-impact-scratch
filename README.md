@@ -2,6 +2,10 @@
 
 Game arcade tembak-tembakan luar angkasa yang dibuat sebagai **proyek Scratch 3 asli**, bukan simulasi HTML.
 
+## Perbaikan latar (20 Oktober 2026)
+
+Jika Scratch menampilkan kotak abu-abu dengan tanda **?**, itu berasal dari backdrop SVG versi lama yang tidak kompatibel dengan renderer Scratch. Keempat backdrop sekarang disimpan sebagai gambar PNG ukuran 480 × 360 dalam `Space_Impact.sb3` terbaru. **Unduh kembali file terbaru dari GitHub lalu buka ulang di Scratch Editor**; file yang sudah terimpor sebelumnya tidak akan diperbarui otomatis.
+
 ## Bermain
 
 1. Download `Space_Impact.sb3` dari repositori ini.
@@ -20,6 +24,6 @@ Game arcade tembak-tembakan luar angkasa yang dibuat sebagai **proyek Scratch 3 
 
 ## Rebuild
 
-Jalankan `python3 build.py` dari root repo untuk menghasilkan `Space_Impact.sb3`, `project.json` dan direktori `assets/`. Hanya memakai Python standard library. `Space_Impact.sb3` merupakan berkas yang diimpor ke Scratch, sedangkan `build.py` menyediakan generator proyek untuk pengembangan.
+Instal dependensi dengan `python -m pip install -r requirements.txt`, lalu jalankan `python3 build.py` dari root repo untuk menghasilkan `Space_Impact.sb3`, `project.json` dan direktori `assets/`. Pembuatan latar PNG menggunakan `CairoSVG` dan `Pillow`. `Space_Impact.sb3` merupakan berkas yang diimpor ke Scratch, sedangkan `build.py` menyediakan generator proyek untuk pengembangan.
 
 **Author:** Balya Rochmadi
