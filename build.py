@@ -1,4 +1,6 @@
 import json, hashlib, zipfile, io, math, struct, random, os, base64, re
+import cairosvg
+from PIL import Image
 from pathlib import Path
 D=Path(__file__).parent
 A=D/'assets'; A.mkdir(exist_ok=True)
@@ -27,7 +29,17 @@ plasma=wrap(36,36,'''<circle cx="18" cy="18" r="16" fill="#fc426b" opacity=".3"/
 
 assets={}
 for n,svg in [('menu',menu),('arena',space),('kalah',end_screen('GAME OVER','Pesawatmu hancur!','#ff6c91')),('menang',end_screen('MENANG!','Galaksi berhasil diselamatkan!','#6ffff4')),('player',player),('enemy-red',enemy1),('enemy-purple',enemy2),('laser',laser),('boss',boss),('plasma',plasma)]:
-    a,_=asset(n,svg)
+    # Scratch sometimes replaces complex SVG backdrops with a gray "?" placeholder.
+    # Rasterize stage backdrops as 480x360 indexed PNG for reliable Scratch rendering.
+    if n in {'menu', 'arena', 'kalah', 'menang'}:
+        png = cairosvg.svg2png(bytestring=svg.encode('utf-8'), output_width=480, output_height=360)
+        img = Image.open(io.BytesIO(png)).convert('RGB').quantize(colors=192, method=Image.Quantize.MEDIANCUT)
+        buff = io.BytesIO()
+        img.save(buff, format='PNG', optimize=True)
+        a,_=asset(n,buff.getvalue(),'png')
+        a['bitmapResolution']=1
+    else:
+        a,_=asset(n,svg)
     # costume center appropriate
     sizes={'menu':(480,360),'arena':(480,360),'kalah':(480,360),'menang':(480,360),'player':(120,82),'enemy-red':(110,80),'enemy-purple':(110,80),'laser':(56,18),'boss':(175,148),'plasma':(36,36)}
     w,h=sizes[n]; a.update(rotationCenterX=w/2,rotationCenterY=h/2)
@@ -249,7 +261,8 @@ raw=json.dumps(project,ensure_ascii=False,separators=(',',':')).encode()
 out=D/'Space_Impact.sb3'
 with zipfile.ZipFile(out,'w',compression=zipfile.ZIP_DEFLATED,compresslevel=9) as z:
  z.writestr('project.json',raw)
- for path in sorted(A.iterdir()):z.write(path,path.name)
+ for filename in sorted({c['md5ext'] for t in project['targets'] for c in t['costumes']} | {s['md5ext'] for t in project['targets'] for s in t['sounds']}):
+  z.write(A/filename,filename)
 
 print('PROJECT',len(raw),'BYTES',out.stat().st_size,'BLOCKS',[(t['name'],len(t['blocks'])) for t in project['targets']],'ASSETS',len(list(A.iterdir())))
 print('SB3 valid zip',zipfile.ZipFile(out).testzip())
